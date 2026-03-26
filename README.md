@@ -40,7 +40,6 @@ We extract topological features (H1 persistence) from evolving latent windows an
   - Increased latent stability  
   - More structured latent geometry  
 
-
 ## Methodology
 
 ### 1. Data Processing
@@ -56,15 +55,16 @@ We extract topological features (H1 persistence) from evolving latent windows an
 - Outputs multi-horizon predictions (1-day, 7-day, 30-day)
 
 ### 3. Latent Extraction
-- Extract full hidden sequence:
-  latent_seq ∈ R^{N × T × 256}
+- Extract full hidden sequence:  
+  `latent_seq ∈ R^{N × T × 256}`
+
 - Use final hidden state or sequence for analysis
 
 ### 4. Zigzag Persistent Homology
-- Apply on evolving latent windows:
-  F_i → F_i ∪ F_{i+1} ← F_{i+1}
-- Use Vietoris–Rips filtration (Dionysus)
-- PCA (3D) for computational efficiency
+- Apply on evolving latent windows:  
+  `F_i → F_i ∪ F_{i+1} ← F_{i+1}`  
+- Use Vietoris–Rips filtration (Dionysus)  
+- PCA (3D) for computational efficiency  
 
 ### 5. Topological Features
 From H1 persistence diagrams:
@@ -74,35 +74,27 @@ From H1 persistence diagrams:
 - Persistence entropy  
 
 ### 6. Topology-Augmented Forecasting
-- Concatenate topological features with latent representation
-- Train augmented prediction model
+- Concatenate topological features with latent representation  
+- Train augmented prediction model  
 
-## Results Summary
 
-| Horizon | Baseline RMSE | Topo-Aug RMSE | Observation |
-|--------|--------------|--------------|------------|
-| 1-day  | ~0.0025      | ~0.0028      | No improvement (task too easy) |
-| 7-day  | ~0.0402      | ~0.0333      | Improved performance |
-| 30-day | ~0.2951      | ~0.2631      | Significant improvement |
 
-Key findings:
+**Key findings:**
 - Topology helps more as forecasting difficulty increases  
 - Improves long-term prediction stability  
 - Reduces latent variance and noise  
 
 ## Installation
 
+### Option 1: Using Conda (Recommended)
+
 ```bash
-conda create -n tda python=3.12
+conda env create -f environment.yml
 conda activate tda
-
-pip install torch numpy pandas scikit-learn matplotlib
-pip install dionysus ripser persim
+```
 
 
-Citation
-@misc{topoforecast2026,
-  title={Topology-Augmented Forecasting via Zigzag Persistent Homology},
-  author={Madumita Karthikeyan},
-  year={2026}
-}
+### Option 2: Using pip
+pip install -r requirements.txt
+# Install Dionysus separately (important)
+pip install git+https://github.com/mrzv/dionysus.git
