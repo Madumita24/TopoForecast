@@ -96,5 +96,5 @@ conda activate tda
 
 ### Option 2: Using pip
 pip install -r requirements.txt
-# Install Dionysus separately (important)
+#### Install Dionysus separately (important)
 pip install git+https://github.com/mrzv/dionysus.git
