@@ -1,0 +1,20 @@
+name: tda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - scikit-learn
+  - scipy
+  - matplotlib
+  - joblib
+  - openpyxl
+  - cython=3.2.2
+  - pip
+  - pip:
+      - torch==2.9.1
+      - ripser==0.6.12
+      - persim==0.3.8
+      - git+https://github.com/mrzv/dionysus.git
