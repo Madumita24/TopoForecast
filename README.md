@@ -84,6 +84,28 @@ From H1 persistence diagrams:
 - Improves long-term prediction stability  
 - Reduces latent variance and noise  
 
+## 📊 Data Source
+
+This work uses the publicly available **MSEA-Res dataset**, which provides long-term reservoir storage records across Mainland Southeast Asia.
+
+**Dataset:**
+- Mahto, S. S., Fatichi, S., & Galelli, S. (2025)  
+- *A 1985–2023 time series dataset of absolute reservoir storage in Mainland Southeast Asia (MSEA-Res)*  
+- Published: June 17, 2025  
+
+This dataset includes reservoir storage along with associated hydro-meteorological variables and is used for all experiments in this repository.
+
+Please cite the dataset as:
+
+```bibtex
+@article{mahto2025mseares,
+  title={A 1985–2023 time series dataset of absolute reservoir storage in Mainland Southeast Asia (MSEA-Res)},
+  author={Mahto, Shanti Shwarup and Fatichi, Simone and Galelli, Stefano},
+  year={2025}
+}
+```
+---
+
 ## Installation
 
 ### Option 1: Using Conda (Recommended)
