@@ -1,127 +1,238 @@
 # TopoForecast
 
-Topology-augmented reservoir forecasting using deep learning and topological data analysis (TDA).
+**Topology-Augmented Latent Dynamics for Long-Horizon Time Series
+Forecasting**
+
+Repository for the reproducibility materials associated with the
+manuscript submitted to the *International Journal of Forecasting*.
 
 ## Overview
 
-This repository implements a novel forecasting framework that integrates deep neural networks with topological data analysis (TDA) to study and improve long-horizon time series prediction.
+This repository contains code, configurations, processed data, model
+outputs, and analysis utilities for experiments on topology-augmented
+neural time-series forecasting.
 
-A Bidirectional Long Short-Term Memory (BiLSTM) model is trained to forecast reservoir storage. The learned latent representations are then analyzed using zigzag persistent homology, allowing us to capture the evolving geometric structure of temporal dynamics. These topological summaries are incorporated into the forecasting pipeline to enhance performance and interpretability.
+The proposed framework uses a two-stage design:
 
-## Key Idea
+1.  **Stage A — latent topology extraction**
+    - Train a BiLSTM forecasting model.
+    - Extract the complete latent-state trajectories.
+    - Project latent vectors to three dimensions using PCA for
+      computational tractability.
+    - Construct overlapping temporal frames.
+    - Compute zigzag persistent homology across adjacent frames.
+    - Convert the resulting persistence information into
+      fixed-dimensional topological descriptors.
+2.  **Stage B — topology-augmented forecasting**
+    - Initialize and train a second BiLSTM independently from Stage A.
+    - Concatenate its final hidden state with the precomputed
+      topological descriptors.
+    - Use the combined representation to produce the forecast.
 
-Traditional deep learning models learn latent representations but provide limited insight into their internal structure. This work treats the neural network as a dynamical system, where:
+The topology descriptors supplied to Stage B are fixed auxiliary inputs
+computed from the separately trained Stage A encoder. The topology
+computation itself is not differentiated through.
 
-- Hidden states form trajectories in latent space  
-- These trajectories exhibit geometric patterns (loops, cycles, manifolds)  
-- Topology provides a principled way to quantify this structure  
+## Main Experiments
 
-We extract topological features (H1 persistence) from evolving latent windows and use them as additional signals for forecasting.
+The repository is organized around the experiments reported in the
+manuscript:
 
-## Contributions
+- controlled Lorenz-system validation;
+- Sirikit reservoir forecasting;
+- univariate forecasting using reservoir storage only;
+- bivariate forecasting using reservoir storage and upstream soil
+  moisture;
+- forecast horizons of 1, 7, and 30 days;
+- multi-seed robustness experiments using seeds 7, 42, and 123;
+- latent-space geometry and stability analysis;
+- permutation-based topology diagnostics; and
+- comparisons with classical, machine-learning, deep-learning, and
+  Transformer baselines.
 
-- Unified framework combining:
-  - Time-series forecasting  
-  - Deep recurrent neural networks  
-  - Topological data analysis  
+------------------------------------------------------------------------
 
-- Latent-space analysis using zigzag persistent homology  
+## Reported Results
 
-- Extraction of dynamic topological descriptors:
-  - Number of loops  
-  - Maximum persistence  
-  - Mean persistence  
-  - Persistence entropy  
+### Univariate 30-Day Multi-Seed Experiment
 
-- Topology-augmented forecasting model  
+| Seed |     BiLSTM RMSE | BiLSTM + Topology RMSE | Gain (%) |
+|-----:|----------------:|-----------------------:|---------:|
+|    7 |        0.301654 |               0.282953 |    +6.20 |
+|   42 |        0.306961 |               0.307895 |    -0.30 |
+|  123 |        0.296515 |               0.303057 |    -2.21 |
+| Mean | 0.3017 ± 0.0052 |        0.2980 ± 0.0132 |    +1.23 |
 
-- Empirical evaluation showing:
-  - Improved long-horizon forecasting (7-day, 30-day)  
-  - Increased latent stability  
-  - More structured latent geometry  
+The univariate improvement is therefore small on average and varies
+across random seeds.
 
-## Methodology
+### Bivariate 30-Day Multi-Seed Experiment
 
-### 1. Data Processing
-- Reservoir storage time series (Sirikit, Nam Oun)
-- Chronological train/test split
-- Standardization using training data only
-- Sliding window formulation (lookback = 180)
+| Seed | BiLSTM RMSE | BiLSTM + Topology RMSE | Gain (%) |
+|-----:|------------:|-----------------------:|---------:|
+|    7 |    0.311917 |               0.283262 |     9.19 |
+|   42 |    0.285707 |               0.258785 |     9.42 |
+|  123 |    0.331212 |               0.304016 |     8.21 |
+| Mean |    0.309612 |               0.282021 |     8.94 |
 
-### 2. Forecasting Model
-- BiLSTM with:
-  - 2 layers  
-  - Hidden size = 128 (bidirectional → 256 latent dim)  
-- Outputs multi-horizon predictions (1-day, 7-day, 30-day)
+Topology augmentation improves the bivariate 30-day result for all three
+reported seeds.
 
-### 3. Latent Extraction
-- Extract full hidden sequence:  
-  `latent_seq ∈ R^{N × T × 256}`
+### 30-Day Univariate Model Comparison
 
-- Use final hidden state or sequence for analysis
+| Model                   |   RMSE (km³) |    MAE (km³) |           R² |
+|-------------------------|-------------:|-------------:|-------------:|
+| SARIMA                  |     0.553394 |     0.287727 |     0.790607 |
+| Random Forest           |     0.468828 |     0.329655 |     0.849713 |
+| XGBoost                 |     0.409329 |     0.273896 |     0.885439 |
+| GRU                     |     0.388845 |     0.254612 |     0.896617 |
+| TCN                     |     0.388581 |     0.227410 |     0.896758 |
+| LSTM                    |     0.380491 |     0.235995 |     0.901012 |
+| BiLSTM                  |     0.351206 |     0.228914 |     0.915663 |
+| PatchTST                |     0.449941 |     0.320224 |     0.861578 |
+| **BiLSTM + Zigzag TDA** | **0.313102** | **0.192160** | **0.932971** |
 
-### 4. Zigzag Persistent Homology
-- Apply on evolving latent windows:  
-  `F_i → F_i ∪ F_{i+1} ← F_{i+1}`  
-- Use Vietoris–Rips filtration (Dionysus)  
-- PCA (3D) for computational efficiency  
+> **Important reproducibility note:** the single-run model-comparison
+> experiment, the single-run horizon analysis, and the multi-seed
+> robustness experiment were run as separate experimental batches. Their
+> numerical values should therefore be reproduced and verified
+> separately rather than pooled.
 
-### 5. Topological Features
-From H1 persistence diagrams:
-- Number of loops  
-- Maximum lifetime  
-- Mean lifetime  
-- Persistence entropy  
+### Horizon Analysis
 
-### 6. Topology-Augmented Forecasting
-- Concatenate topological features with latent representation  
-- Train augmented prediction model  
+| Horizon | Baseline RMSE | Topology RMSE | RMSE Gain (%) |
+|---------|--------------:|--------------:|--------------:|
+| 1 day   |       0.00250 |       0.00279 |         -11.6 |
+| 7 days  |       0.04018 |       0.03330 |          17.1 |
+| 30 days |       0.29514 |       0.26312 |          10.9 |
 
+These values correspond to the separate single-run horizon-analysis
+batch reported in the manuscript.
 
+------------------------------------------------------------------------
 
-**Key findings:**
-- Topology helps more as forecasting difficulty increases  
-- Improves long-term prediction stability  
-- Reduces latent variance and noise  
+## Dataset
 
-## 📊 Data Source
+### Sirikit Reservoir
 
-This work uses the publicly available **MSEA-Res dataset**, which provides long-term reservoir storage records across Mainland Southeast Asia.
+The primary reservoir experiments use the Sirikit reservoir subset of
+the MSEA-Res v2 dataset.
 
-**Dataset:**
-- Mahto, S. S., Fatichi, S., & Galelli, S. (2025)  
-- *A 1985–2023 time series dataset of absolute reservoir storage in Mainland Southeast Asia (MSEA-Res)*  
-- Published: June 17, 2025  
+- Period: **1987-12-12 to 2023-12-31**
+- Number of daily observations: **13,169**
+- Training period: observations before **2016-01-01**
+- Test period: observations from **2016-01-01** onward
+- Lookback window: **180 days**
+- Forecast horizons: **1, 7, and 30 days**
 
-This dataset includes reservoir storage along with associated hydro-meteorological variables and is used for all experiments in this repository.
+Two input settings are evaluated:
 
-Please cite the dataset as:
+- **Univariate:** reservoir storage only
+- **Bivariate:** reservoir storage + upstream soil moisture
 
-```bibtex
-@article{mahto2025mseares,
-  title={A 1985–2023 time series dataset of absolute reservoir storage in Mainland Southeast Asia (MSEA-Res)},
-  author={Mahto, Shanti Shwarup and Fatichi, Simone and Galelli, Stefano},
-  year={2025}
-}
-```
----
+All scaling and normalization statistics are estimated from the training
+period only.
+
+### Data Availability
+
+The reservoir data originate from MSEA-Res v2. This repository should
+include either the processed Sirikit extract used by the experiments or
+exact preparation instructions, subject to the redistribution terms of
+the source dataset.
+
+------------------------------------------------------------------------
+
+## Core Model Configuration
+
+### BiLSTM
+
+- hidden dimension: 128 per direction;
+- number of recurrent layers: 2;
+- bidirectional: yes;
+- resulting latent dimension: 256;
+- dropout: 0.3;
+- optimizer: AdamW;
+- learning rate: `1e-3`;
+- validation fraction: 15% of the training period;
+- early stopping patience: 20 epochs; and
+- lookback window: 180 days.
+
+### Zigzag Topology
+
+The reservoir topology pipeline uses:
+
+- temporal frame size: 200;
+- frame stride: 50;
+- Vietoris–Rips filtration;
+- maximum Rips distance: 2.0;
+- homology dimension: H1;
+- PCA projection to 3 dimensions prior to filtration; and
+- zigzag persistent homology computed using **Dionysus**.
+
+The raw topological descriptors are:
+
+- H1 feature count;
+- maximum persistence lifetime;
+- mean persistence lifetime; and
+- persistence entropy.
+
+Descriptors with constant or near-zero variance are removed using
+training-period information before they are supplied to Stage B.
+
+------------------------------------------------------------------------
 
 ## Installation
 
-### Option 1: Using Conda (Recommended)
+Two environment specifications are provided:
 
-```bash
-conda env create -f environment.yml
-conda activate tda
+``` bash
+pip install -r requirements.txt
 ```
 
+or:
 
-### Option 2: Using pip
-pip install -r requirements.txt
-#### Install Dionysus separately (important)
-pip install git+https://github.com/mrzv/dionysus.git
+``` bash
+conda env create -f environment.yml
+conda activate topoforecast
+```
 
+The exact software versions used for the final reproducibility release
+should be recorded once the repository environment has been verified.
 
-## Acknowledgment
-This work was conducted as part of a Master's thesis at Arizona State University.  
-The author would like to thank **Dr. Rong Pan** for mentorship and guidance throughout the project.
+------------------------------------------------------------------------
+
+## Reproducibility Principles
+
+Each experiment directory should contain or point to:
+
+- the exact configuration used for the run;
+- the random seed;
+- the chronological train/validation/test definition;
+- preprocessing parameters;
+- model checkpoint(s);
+- predictions in original physical units;
+- RMSE, MAE, and R²;
+- latent-state outputs where required;
+- precomputed topology features where required; and
+- scripts that verify the reported values.
+
+Small numerical differences may occur across hardware and software
+environments despite fixed random seeds, particularly for GPU training.
+The repository should record the tested environment used for the final
+reproduced results.
+
+------------------------------------------------------------------------
+
+## License
+
+A project license should be selected before the public release of the
+repository. Dataset licensing and redistribution conditions remain
+governed by the original data provider.
+
+------------------------------------------------------------------------
+
+## Acknowledgments
+
+This work uses PyTorch, scikit-learn, SciPy, statsmodels, XGBoost,
+Matplotlib, and Dionysus, together with the MSEA-Res v2 reservoir
+dataset.
